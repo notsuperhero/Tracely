@@ -142,10 +142,19 @@ func setupRouter(cfg *config.Config, db *gorm.DB, authService *services.AuthServ
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			// allow any localhost port dynamically
-			return origin == "http://localhost" ||
+			if origin == "http://localhost" ||
 				origin == "http://127.0.0.1" ||
 				strings.HasPrefix(origin, "http://localhost:") ||
-				strings.HasPrefix(origin, "http://127.0.0.1:")
+				strings.HasPrefix(origin, "http://127.0.0.1:") {
+				return true
+			}
+			// allow configured production origins (e.g. Vercel)
+			for _, allowed := range cfg.CORSOrigins {
+				if strings.TrimSpace(allowed) == origin {
+					return true
+				}
+			}
+			return false
 		},
 		MaxAge: 12 * time.Hour,
 	}
